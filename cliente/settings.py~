@@ -1,0 +1,17 @@
+#coding:utf-8
+
+#Endereço do servidor.
+SERVIDOR = 'localhost'
+
+#Porta que o servidor está escutando.
+PORTA = 8019
+
+#Usuário usado pelo programa. É fortemente aconselhável criar um 
+#usuário EXCLUSIVO que será usado pelo programa.
+USUARIO = 'thiago'
+
+#Senha do usuário. Será usado SSH para transferência de arquivos.
+SENHA = 'Skywalker4794'
+
+#Pasta que será usada pelo cliente.
+PASTA = '/home/thiago/Documentos/syncbox'
