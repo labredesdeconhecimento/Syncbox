@@ -6,6 +6,9 @@ from diretorio import Diretorio
 from settings import *
 
 class Cliente():
+	'''
+		Class cliente.
+	'''
 	def __init__(self):
 		print 'Iniciando Cliente...'
 		
