@@ -35,14 +35,12 @@ class Servidor():
         
         try:
             self.socket = socket.socket()
+	        self.socket.bind(('', self.porta))
+	        self.socket.listen(1)
         except:
             sys.stderr('Não foi possível abrir o socket.')
             self.log.escrever('Não foi possível abrir o socket.')
             sys.exit()
-
-        self.socket.bind(('', self.porta))
-        self.socket.listen(1)
-        print 'Socket configurado...'
 
         print 'Configurando outras opções do servidor...'
         self.clientes = {}
