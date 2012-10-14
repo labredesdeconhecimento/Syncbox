@@ -6,6 +6,7 @@ import re
 import subprocess
 import pwd
 import log
+import sys
 from settings import *
 
 
@@ -34,9 +35,9 @@ class Servidor():
         self.porta = PORTA
         
         try:
-            self.socket = socket.socket()
-	        self.socket.bind(('', self.porta))
-	        self.socket.listen(1)
+			self.socket = socket.socket()
+			self.socket.bind(('', self.porta))
+			self.socket.listen(1)
         except:
             sys.stderr('Não foi possível abrir o socket.')
             self.log.escrever('Não foi possível abrir o socket.')
@@ -140,6 +141,10 @@ class Servidor():
         elif opcao == 'PASTA':
             self.send(cliente, '{0}#'.format(PASTA_SERVIDOR))
 
+        elif opcao == 'PASTA_TEMP':
+            temp = self.gerar_pasta_temporaria(cliente.getpeername()[0])
+            self.send(cliente, '{0}#'.format(temp))
+
     def read(self, cliente):
         '''
             Método responsável por ler as mensagens dos clientes para
@@ -171,3 +176,10 @@ class Servidor():
             problema com o socket.')
             self.log.escrever('Não foi possível responder o cliente. Problema com o socket.')
             sys.exit()
+
+    def gerar_pasta_temporaria(self, ip):
+			pasta = ip.replace('.', '-')
+			pasta = '{0}/.{1}'.format(PASTA_SERVIDOR, pasta)
+			if os.path.exists(pasta) == False:
+                os.mkdir('{0}/.{1}'.format(PASTA_SERVIDOR, pasta))
+			return pasta

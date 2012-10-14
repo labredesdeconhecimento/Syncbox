@@ -2,6 +2,8 @@
 import socket
 import time
 import os
+import sys
+import platform
 from diretorio import Diretorio
 from settings import *
 
@@ -15,24 +17,33 @@ class Cliente():
 		print 'Configurando socket...'
 		self.porta = PORTA
 		self.socket = socket.socket()
-		self.socket.settimeout(1)
 		self.servidor = SERVIDOR
-		self.porta = PORTA
 		
 		if os.path.exists(PASTA) == False:
 			print 'Criando pasta...'
-			os.mkdir(PASTA)
+			try:
+				os.mkdir(PASTA)
+			except OSError:
+				print 'Erro ao criar pasta.'
+				sys.exit()
 		
 		pasta_servidor = self.requisicao('PASTA#')
-		
+		pasta_temporaria = self.requisicao('PASTA_TEMP#')
+
 		print 'Configurando Cliente...'
-		self.diretorio = Diretorio(self.servidor, PASTA, pasta_servidor, USUARIO, SENHA)
+		self.diretorio = Diretorio(self.servidor, PASTA, pasta_servidor, pasta_temporaria, USUARIO, SENHA)
 		
 		print 'Configuração completa!'
 
 	def requisicao(self, mensagem):
 		self.socket = socket.socket()
-		self.socket.connect((self.servidor, self.porta))
+
+		try:
+			self.socket.connect((self.servidor, self.porta))
+		except socket.error:
+			print 'Não foi possível conectar com o servidor.'
+			sys.exit()
+			
 		self.socket.sendall(mensagem)
 		resposta = self.read(self.socket)
 		self.socket.close()
@@ -47,39 +58,29 @@ class Cliente():
 			msg.append(temp)
 		return ''.join(msg)
 
-cli = Cliente()
-'''
-while True:
-	print cli.diretorio.comparar_arquivos()
-	time.sleep(5)
-'''
-resposta = cli.requisicao('PRIMEIRA#')
-if resposta == 'OK':
-	print 'Sincronizando pasta do cliente'
-	cli.diretorio.sincrozinar_cliente()
-	print 'Sincronização completa'
-	print
-	print
-	time.sleep(5)
+	def start(self):
+		resposta = self.requisicao('PRIMEIRA#')
+		if resposta == 'OK':
+			print 'Sincronizando pasta do cliente...'
+			self.diretorio.sincrozinar_cliente()
+			time.sleep(5)
 
-while True:
-	update = cli.diretorio.comparar_arquivos()
-	print 'Novos arquivos {0}'.format(update)
-	if update == True:
-		print 'Pedindo atualização'
-		resposta = cli.requisicao('ATUALIZAR#')
-		if resposta == 'ATUALIZE':
-			print 'OK, atualizar servidor'
-			cli.diretorio.sincronizar_servidor()
-			cli.diretorio.sincrozinar_cliente()
-			cli.requisicao('COMPLETA#')
-	else:
-		resposta = cli.requisicao('NOVIDADE#')
-		print 'Novidade? {0}'.format(resposta)
-		if resposta == 'SIM':
-			cli.diretorio.sincrozinar_cliente()
-			resposta = cli.requisicao('COMPLETA#')
-			print 'lol'
-		print
-		print
-		time.sleep(5)
+		while True:
+			update = self.diretorio.novos_arquivos()
+			if update == True:
+				resposta = self.requisicao('ATUALIZAR#')
+				if resposta == 'ATUALIZE':
+					print 'Atualizando arquivos...'
+					self.diretorio.sincronizar_servidor()
+					self.diretorio.sincrozinar_cliente()
+					self.requisicao('COMPLETA#')
+					print 'Arquivos atualizados!'
+			else:
+				resposta = self.requisicao('NOVIDADE#')
+				if resposta == 'SIM':
+					print 'Atualizando arquivos...'
+					self.diretorio.sincrozinar_cliente()
+					self.requisicao('COMPLETA#')
+					print 'Arquivos atualizados!'
+				time.sleep(5)
+

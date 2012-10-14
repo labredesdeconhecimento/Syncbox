@@ -17,8 +17,7 @@ class Log():
         '''
         try:
             with open(self.arquivo, 'a') as arquivo:
-                arquivo.write('{0}  --  {1}\n' /
-                .format(datetime.today(), mensagem))
+                arquivo.write('{0}  --  {1}\n'.format(datetime.today(), mensagem))
         except:
             sys.stderr('Erro ao escrever log.')
             sys.exit()

@@ -1,7 +1,7 @@
 #coding:utf-8
 
 #Endereço do servidor.
-SERVIDOR = 'localhost'
+SERVIDOR = '192.168.1.103'
 
 #Porta que o servidor está escutando.
 PORTA = 8019
@@ -13,4 +13,5 @@ USUARIO = 'servidor'
 SENHA = '123456'
 
 #Pasta que será usada pelo cliente.
-PASTA = '/home/servidor/syncbox'
+PASTA = '/home/user/Documentos/Syncbox'
+

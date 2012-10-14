@@ -2,10 +2,11 @@
 import os
 import time
 import subprocess
+import sys
 from settings import *
 
 class Diretorio():
-	def __init__(self, servidor, pasta, pasta_servidor, usuario, senha):
+	def __init__(self, servidor, pasta, pasta_servidor, pasta_temporaria, usuario, senha):
 		self.servidor = servidor
 		self.pasta_servidor = pasta_servidor
 
@@ -16,18 +17,26 @@ class Diretorio():
 		self.arquivos = []
 		self.carregar_arquivos()
 
-		self.sincroniza_servidor = 'sshpass -p {0} rsync -arzp --delete --filter=P_.* {1}/ {2}@{3}:{4}/'.format(self.senha, self.pasta, self.usuario, self.servidor, self.pasta_servidor)
-		self.sincroniza_cliente = 'sshpass -p {0} rsync -arzp --delete --filter=P_.* {2}@{3}:{4}/ {1}/ '.format(self.senha, self.pasta, self.usuario, self.servidor, self.pasta_servidor)
+		self.ultima_modificacao = os.path.getmtime(self.pasta)
+		print self.ultima_modificacao
+
+#		self.sincroniza_servidor = 'sshpass -p {0} rsync -arzp --delete --filter=P_.* {1}/ {2}@{3}:{4}/'.format(self.senha, self.pasta, self.usuario, self.servidor, self.pasta_servidor)
+
+		self.sincroniza_servidor = 'sshpass -p {0} rsync -arzp --delete --exclude=.* -T {1} --delay-updates --partial-dir={1} {2}/ {3}@{4}:{5}/'.format(self.senha, pasta_temporaria, self.pasta, self.usuario, self.servidor, self.pasta_servidor)
+		self.sincroniza_cliente = 'sshpass -p {0} rsync -arzp --delete --exclude=.* {2}@{3}:{4}/ {1}/ '.format(self.senha, self.pasta, self.usuario, self.servidor, self.pasta_servidor)
 
 
 	def sincronizar_servidor(self):
-		print self.sincroniza_servidor
 		subprocess.check_output(self.sincroniza_servidor.split())
 
 	def sincrozinar_cliente(self):
-		print self.sincroniza_cliente
-		subprocess.check_output(self.sincroniza_cliente.split())
-		self.carregar_arquivos()
+		try:
+			subprocess.check_output(self.sincroniza_cliente.split())
+		except subprocess.CalledProcessError:
+			print 'Erro na chave Rsync'
+			print 'Abra uma conexão SSH com o servidor.'
+			sys.exit()
+
 
 	def carregar_arquivos(self):
 		if os.path.exists(self.pasta):
@@ -70,3 +79,11 @@ class Diretorio():
 		
 		self.arquivos = lista_temporaria
 		return False
+
+	def novos_arquivos(self):
+		temp = os.path.getmtime(self.pasta)
+		if temp != self.ultima_modificacao:
+			self.ultima_modificacao = temp
+			return True
+		else:
+			return False
