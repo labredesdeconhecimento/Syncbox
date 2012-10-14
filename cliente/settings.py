@@ -7,10 +7,10 @@ SERVIDOR = 'localhost'
 PORTA = 8019
 
 #Usuário usado pelo programa.
-USUARIO = 'thiago'
+USUARIO = 'servidor'
 
 #Senha do usuário.
-SENHA = 'Skywalker4794'
+SENHA = '123456'
 
 #Pasta que será usada pelo cliente.
-PASTA = '/home/thiago/Documentos/syncbox'
+PASTA = '/home/servidor/syncbox'
