@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>servidor &mdash; Syncbox 1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Syncbox 1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">Syncbox 1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for servidor</h1><div class="highlight"><pre>
+<span class="c">#coding:utf-8</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Servidor"><a class="viewcode-back" href="../documentacao.html#servidor.Servidor">[docs]</a><span class="k">class</span> <span class="nc">Servidor</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Classe Servidor.</span>
+<span class="sd">        Todas as funcionalidades do servidor synbox estão nessa classe.</span>
+
+<span class="sd">        O servidor é responsável por gerenciar todos os clientes, e reponder</span>
+<span class="sd">        todas as requisições dos clientes.</span>
+
+<span class="sd">        Em um determinado intervalo de tempo, o cliente &quot;pergunta&quot; ao servidor</span>
+<span class="sd">        se existem novos arquivos, o servidor verifica a pasta onde os</span>
+<span class="sd">        arquivos que vão ser sincronizados estão, caso haja mudança</span>
+<span class="sd">        desde a ultima atualização do cliente, o servidor responde ao cliente</span>
+<span class="sd">        que o mesmo deve fazer uma sincronização de dados.</span>
+
+<span class="sd">        Todas as sincronizações são feitas apenas depois da autorização</span>
+<span class="sd">        do servidor.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">&#39;Iniciando servidor...&#39;</span>
+
+        <span class="k">print</span> <span class="s">&#39;Configurando socket...&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">porta</span> <span class="o">=</span> <span class="n">PORTA</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">porta</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">listen</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Não foi possível abrir o socket.&#39;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+        <span class="k">print</span> <span class="s">&#39;Configurando outras opções do servidor...&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clientes</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">)</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;Criando pasta...&#39;</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Não foi possível criar a pasta.</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+        <span class="k">print</span> <span class="s">&#39;Configuração completa!&#39;</span>
+        <span class="k">print</span> <span class="s">&#39;Servidor funcionando!&#39;</span>
+
+<div class="viewcode-block" id="Servidor.start"><a class="viewcode-back" href="../documentacao.html#servidor.Servidor.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método responsável por escutar o socket e esperar conexões</span>
+<span class="sd">            nesse socket.</span>
+
+<span class="sd">            Quando um cliente se conecta no servidor, uma thread é lançada</span>
+<span class="sd">            para cuidar das requisições do cliente conectado, e esse</span>
+<span class="sd">            método volta a escutar o socket aguardando novas conexões.</span>
+
+<span class="sd">            O uso de threads nessa parte do software é fundamental</span>
+<span class="sd">            para o servidor ser capaz de atender vários clientes</span>
+<span class="sd">            paralelamente.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">con</span><span class="p">,</span> <span class="n">cli</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
+            <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">escuta_cliente</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">con</span><span class="p">,))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Servidor.escuta_cliente"><a class="viewcode-back" href="../documentacao.html#servidor.Servidor.escuta_cliente">[docs]</a>    <span class="k">def</span> <span class="nf">escuta_cliente</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cliente</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método responsável por atender as requisições de um cliente</span>
+<span class="sd">            já conectado no servidor.</span>
+
+<span class="sd">            Requisições:</span>
+
+<span class="sd">            PRIMEIRA = Indica que o cliente está iniciando agora e faz seu</span>
+<span class="sd">            primeiro contato com o servidor. O servidor inclui ou atualiza</span>
+<span class="sd">            o cliente em um dicionário. O cliente sincroniza os dados do</span>
+<span class="sd">            lado do cliente com os dados do lado do servidor.</span>
+
+<span class="sd">            ATUALIZAR = O cliente informa ao servidor que irá sincronizar os</span>
+<span class="sd">            dados do lado do servidor com os dados do lado do cliente.</span>
+
+<span class="sd">            COMPLETA = O cliente informa ao servidor que acabou seu processo</span>
+<span class="sd">            de sincronização. O servidor atribui ao cliente seu novo tempo</span>
+<span class="sd">            de sincronização e atualiza o servidor com o novo último tempo</span>
+<span class="sd">            de sincronização dos dados do servidor.</span>
+
+<span class="sd">            NOVIDADE = O cliente procura saber com o servidor se aconteceu</span>
+<span class="sd">            alguma sincronização desde a última sincronização que ele fez.</span>
+<span class="sd">            O servidor compara sua última marca de tempo com a marca do cliente</span>
+<span class="sd">            e responde se o cliente tem ou não que atualizar seu dados.</span>
+
+<span class="sd">            PASTA= O cliente pede ao servidor informações sobre o caminho da</span>
+<span class="sd">            pasta onde o servidor está guardado os dados, para que esse caminho</span>
+<span class="sd">            possa ser configurado no mecanismo de sincrinização.</span>
+
+<span class="sd">            OBS: Em cada resposta é usado um símbolo &quot;#&quot; para definir o final</span>
+<span class="sd">            da string.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">opcao</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">cliente</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">opcao</span> <span class="o">==</span> <span class="s">&#39;PRIMEIRA&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;OK#&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clientes</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">cliente</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clientes</span><span class="p">[</span><span class="n">cliente</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span> \
+                <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">opcao</span> <span class="o">==</span> <span class="s">&#39;ATUALIZAR&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clientes</span><span class="p">[</span><span class="n">cliente</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;SEMDELETE#&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;ATUALIZE#&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">opcao</span> <span class="o">==</span> <span class="s">&#39;COMPLETA&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clientes</span><span class="p">[</span><span class="n">cliente</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;OK#&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">opcao</span> <span class="o">==</span> <span class="s">&#39;NOVIDADE&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clientes</span><span class="p">[</span><span class="n">cliente</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;SIM#&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;NAO#&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">opcao</span> <span class="o">==</span> <span class="s">&#39;PASTA&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;{0}#&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="n">opcao</span> <span class="o">==</span> <span class="s">&#39;PASTA_TEMP&#39;</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gerar_pasta_temporaria</span><span class="p">(</span><span class="n">cliente</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">cliente</span><span class="p">,</span> <span class="s">&#39;{0}#&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp</span><span class="p">))</span>
+        <span class="n">cliente</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Servidor.read"><a class="viewcode-back" href="../documentacao.html#servidor.Servidor.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cliente</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método responsável por ler as mensagens dos clientes para</span>
+<span class="sd">            o servidor.</span>
+
+<span class="sd">            Recebe como parâmetro o socket do cliente que está enviando</span>
+<span class="sd">            a mensagem.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">cliente</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">temp</span> <span class="o">==</span> <span class="s">&#39;#&#39;</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Servidor.send"><a class="viewcode-back" href="../documentacao.html#servidor.Servidor.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cliente</span><span class="p">,</span> <span class="n">mensagem</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método responsável por enviar mensagens do servidor</span>
+<span class="sd">            para os clientes.</span>
+
+<span class="sd">            Recebe como parâmetro um socket do cliente que vai</span>
+<span class="sd">            receber a mensagem e a mensagem que vai ser enviada.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cliente</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">mensagem</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Não foi possível responder o cliente.</span><span class="se">\n</span><span class="s"> </span><span class="se">\</span>
+<span class="s">            problema com o socket.&#39;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Servidor.gerar_pasta_temporaria"><a class="viewcode-back" href="../documentacao.html#servidor.Servidor.gerar_pasta_temporaria">[docs]</a>    <span class="k">def</span> <span class="nf">gerar_pasta_temporaria</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método que gera uma pasta para cada cliente onde</span>
+<span class="sd">            os arquivos em transferência ficam armazenados</span>
+<span class="sd">            temporariamente.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">pasta</span> <span class="o">=</span> <span class="n">ip</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="n">pasta</span> <span class="o">=</span> <span class="s">&#39;{0}/.{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PASTA_SERVIDOR</span><span class="p">,</span> <span class="n">pasta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pasta</span><span class="p">)</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="s">&#39;{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pasta</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">pasta</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">Syncbox 1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thiago Dias.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

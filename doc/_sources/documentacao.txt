@@ -1,0 +1,23 @@
+Cliente
+=======
+
+cliente.py
+----------
+.. automodule:: cliente
+   :members:
+
+diretorio.py
+------------
+.. automodule:: diretorio
+   :members:
+
+
+Servidor
+========
+
+servidor.py
+-----------
+.. automodule:: servidor
+   :members:
+
+

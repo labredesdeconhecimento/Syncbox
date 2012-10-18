@@ -4,8 +4,6 @@
 PORTA = 8019
 
 #Pasta onde o servidor vai guardar todos os arquivos.
-PASTA_SERVIDOR = '/home/servidor/syncserver'
+PASTA_SERVIDOR = '/home/servidor/Syncserver'
 
-#Caminho para o arquivo de log.
-ARQUIVO_LOG = 'syncbox.log'
 

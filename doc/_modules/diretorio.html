@@ -1,0 +1,220 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>diretorio &mdash; Syncbox 1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Syncbox 1 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">Syncbox 1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for diretorio</h1><div class="highlight"><pre>
+<span class="c">#coding:utf-8</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="Diretorio"><a class="viewcode-back" href="../documentacao.html#diretorio.Diretorio">[docs]</a><span class="k">class</span> <span class="nc">Diretorio</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        A classe Diretório é responsável por detectar mudanças</span>
+<span class="sd">        no diretório onde estão os arquivos do cliente e iniciar</span>
+<span class="sd">        os comando necessários para atualização tanto do cliente</span>
+<span class="sd">        quanto do servidor na hora que for preciso.</span>
+
+
+<span class="sd">        Estrutura do comando RSYNC:</span>
+
+<span class="sd">        São utilizados três tipos de comando RSYNC para atualização</span>
+<span class="sd">        do arquivos:</span>
+
+<span class="sd">        - Sincroniza servidor:</span>
+<span class="sd">            Utilizado para sincronizar os arquivos do servidor:</span>
+<span class="sd">                rsync -arzp --delete --exclude=.* -T [diretório temporário]</span>
+<span class="sd">                --delay-updates --partial-dir=[diretório temporário]</span>
+<span class="sd">                [diretório do cliente] [login servidor]@[endereço servidor]:/</span>
+<span class="sd">                [diretório do servidor]/</span>
+<span class="sd">        - Sincroniza cliente:</span>
+<span class="sd">            Utilizado para sincronizar os arquivos do cliente:</span>
+<span class="sd">                rsync -arzp --delete --exclude=.* [login servidor]@</span>
+<span class="sd">                [endereço servidor]:/[diretório do servidor]/</span>
+<span class="sd">                [diretório do cliente]</span>
+<span class="sd">        - Sincroniza cliente sem delete:</span>
+<span class="sd">            Utilizado para sincronizar os arquivos do cliente sem deletar</span>
+<span class="sd">            arquivos que estão no cliente e não estão no servidor:</span>
+<span class="sd">                rsync -arzp --exclude=.* [login servidor]@</span>
+<span class="sd">                [endereço servidor]:/[diretório do servidor]/</span>
+<span class="sd">                [diretório do cliente]</span>
+
+<span class="sd">            Argumentos Rsync:</span>
+
+<span class="sd">            -a: Garante a recursão na hora da verificação dos arquivos.</span>
+
+<span class="sd">            -r: Faz com que o Rsync procure arquivos recursivamente dentro</span>
+<span class="sd">                dos diretórios do diretório indicado.</span>
+
+<span class="sd">            -z: Faz com que o Rsync faça uma compressão dos arquivos antes</span>
+<span class="sd">                de fazer o envio deles.</span>
+
+<span class="sd">            -p: Preserva a permissão dos arquivos.</span>
+
+<span class="sd">            --exclude=.*: Não transfere nenhum arquivo oculto.</span>
+
+<span class="sd">            -T [dir]: Indica uma pasta temporária para guardar o arquivo</span>
+<span class="sd">                      que está sendo transferido.</span>
+
+<span class="sd">            --delay-updates: Indica que todos os arquivos que estão sendo</span>
+<span class="sd">                             transferidos naquela transação devem ficar na</span>
+<span class="sd">                             pasta indica com --partial-dir= até toda a</span>
+<span class="sd">                             transação ser concluída.</span>
+
+<span class="sd">            --partial-dir=[dir]: Indica onde os arquivos ficarão até o fim</span>
+<span class="sd">                                 da transação.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">servidor</span><span class="p">,</span> <span class="n">pasta</span><span class="p">,</span> <span class="n">pasta_servidor</span><span class="p">,</span>
+                <span class="n">pasta_temporaria</span><span class="p">,</span> <span class="n">usuario</span><span class="p">,</span> <span class="n">senha</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">servidor</span> <span class="o">=</span> <span class="n">servidor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pasta_servidor</span> <span class="o">=</span> <span class="n">pasta_servidor</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pasta</span> <span class="o">=</span> <span class="n">pasta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span> <span class="o">=</span> <span class="n">usuario</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">senha</span> <span class="o">=</span> <span class="n">senha</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ultima_modificacao</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pasta</span><span class="p">)</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">ultima_modificacao</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sincroniza_servidor</span> <span class="o">=</span> <span class="s">&#39;sshpass -p {0} rsync -arzp --delete </span><span class="se">\</span>
+<span class="s">            --exclude=.* -T {1} --delay-updates --partial-dir={1} </span><span class="se">\</span>
+<span class="s">            {2}/ {3}@{4}:{5}/&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">senha</span><span class="p">,</span> <span class="n">pasta_temporaria</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pasta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">servidor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pasta_servidor</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sincroniza_cliente</span> <span class="o">=</span> <span class="s">&#39;sshpass -p {0} rsync -arzp --delete </span><span class="se">\</span>
+<span class="s">            --exclude=.* {2}@{3}:{4}/ {1}/ &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">senha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pasta</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">servidor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pasta_servidor</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sincroniza_cliente_sem_delete</span> <span class="o">=</span> <span class="s">&#39;sshpass -p {0} rsync -arzp </span><span class="se">\</span>
+<span class="s">            --exclude=.* {2}@{3}:{4}/ {1}/ &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">senha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pasta</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">servidor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pasta_servidor</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Diretorio.sincronizar_servidor"><a class="viewcode-back" href="../documentacao.html#diretorio.Diretorio.sincronizar_servidor">[docs]</a>    <span class="k">def</span> <span class="nf">sincronizar_servidor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método que executa o comando rsync para atualizar o servidor.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sincroniza_servidor</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Erro Rsync&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Diretorio.sincrozinar_cliente"><a class="viewcode-back" href="../documentacao.html#diretorio.Diretorio.sincrozinar_cliente">[docs]</a>    <span class="k">def</span> <span class="nf">sincrozinar_cliente</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método que executa o comando rsync para atualizar o cliente.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sincroniza_cliente</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Erro Rsync&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Diretorio.sincronizar_cliente_sem_delete"><a class="viewcode-back" href="../documentacao.html#diretorio.Diretorio.sincronizar_cliente_sem_delete">[docs]</a>    <span class="k">def</span> <span class="nf">sincronizar_cliente_sem_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método que executa o comando rsync para atualizar</span>
+<span class="sd">            o cliente sem delete.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sincroniza_cliente_sem_delete</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;Erro Rsync&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Diretorio.novos_arquivos"><a class="viewcode-back" href="../documentacao.html#diretorio.Diretorio.novos_arquivos">[docs]</a>    <span class="k">def</span> <span class="nf">novos_arquivos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Método que detecta se houve mudança nos arquivos do cliente.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pasta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">temp</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ultima_modificacao</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ultima_modificacao</span> <span class="o">=</span> <span class="n">temp</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">Syncbox 1 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thiago Dias.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

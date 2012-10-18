@@ -2,10 +2,8 @@
 import socket
 import threading
 import os
-import re
+import time
 import subprocess
-import pwd
-import log
 import sys
 from settings import *
 
@@ -29,23 +27,20 @@ class Servidor():
     '''
     def __init__(self):
         print 'Iniciando servidor...'
-        self.log = log.Log()
 
         print 'Configurando socket...'
         self.porta = PORTA
-        
+
         try:
-			self.socket = socket.socket()
-			self.socket.bind(('', self.porta))
-			self.socket.listen(1)
+            self.socket = socket.socket()
+            self.socket.bind(('', self.porta))
+            self.socket.listen(1)
         except:
-            sys.stderr('Não foi possível abrir o socket.')
-            self.log.escrever('Não foi possível abrir o socket.')
+            sys.stderr.write('Não foi possível abrir o socket.')
             sys.exit()
 
         print 'Configurando outras opções do servidor...'
         self.clientes = {}
-
 
         if os.path.exists(PASTA_SERVIDOR) == False:
             print 'Criando pasta...'
@@ -53,15 +48,11 @@ class Servidor():
             try:
                 os.mkdir(PASTA_SERVIDOR)
             except:
-                sys.stderr('Não foi possível criar a pasta.')
-                self.log.escrever('Não foi possível criar a pasta.')
+                sys.stderr.write('Não foi possível criar a pasta.\n')
                 sys.exit()
-
-        self.ultima_atualizacao = os.path.getmtime(PASTA_SERVIDOR)
 
         print 'Configuração completa!'
         print 'Servidor funcionando!'
-        self.log.escrever('Servidor iniciado')
 
     def start(self):
         '''
@@ -79,6 +70,7 @@ class Servidor():
         while True:
             con, cli = self.socket.accept()
             threading.Thread(target=self.escuta_cliente, args=(con,)).start()
+            time.sleep(1)
 
     def escuta_cliente(self, cliente):
         '''
@@ -115,26 +107,25 @@ class Servidor():
         opcao = self.read(cliente)
 
         if opcao == 'PRIMEIRA':
-            self.log.escrever('Cliente {0} conectado.\n'.format(cliente.getpeername()[0]))
             self.send(cliente, 'OK#')
-            #Programa de verificação da PEP8 aponta has_key como
-            #depreciado, mas a sugestão que o programa da não existe.
             if self.clientes.has_key(cliente.getpeername()[0]) == False:
                 self.clientes[cliente.getpeername()[0]] \
                 = os.path.getmtime(PASTA_SERVIDOR)
 
         elif opcao == 'ATUALIZAR':
-            self.send(cliente, 'ATUALIZE#')
+            if os.path.getmtime(PASTA_SERVIDOR) != (
+                self.clientes[cliente.getpeername()[0]]):
+                self.send(cliente, 'SEMDELETE#')
+            else:
+                self.send(cliente, 'ATUALIZE#')
 
         elif opcao == 'COMPLETA':
-            self.ultima_atualizacao = os.path.getmtime(PASTA_SERVIDOR)
-            self.clientes[cliente.getpeername()[0]] \
-            = os.path.getmtime(PASTA_SERVIDOR)
+            self.clientes[cliente.getpeername()[0]] = os.path.getmtime(PASTA_SERVIDOR)
             self.send(cliente, 'OK#')
 
         elif opcao == 'NOVIDADE':
-            if self.ultima_atualizacao != \
-            self.clientes[cliente.getpeername()[0]]:
+            if os.path.getmtime(PASTA_SERVIDOR) != (
+                self.clientes[cliente.getpeername()[0]]):
                 self.send(cliente, 'SIM#')
             else:
                 self.send(cliente, 'NAO#')
@@ -144,6 +135,7 @@ class Servidor():
         elif opcao == 'PASTA_TEMP':
             temp = self.gerar_pasta_temporaria(cliente.getpeername()[0])
             self.send(cliente, '{0}#'.format(temp))
+        cliente.close()
 
     def read(self, cliente):
         '''
@@ -172,14 +164,18 @@ class Servidor():
         try:
             cliente.send(mensagem)
         except:
-            sys.stderr('Não foi possível responder o cliente.\n \
+            sys.stderr.write('Não foi possível responder o cliente.\n \
             problema com o socket.')
-            self.log.escrever('Não foi possível responder o cliente. Problema com o socket.')
             sys.exit()
 
     def gerar_pasta_temporaria(self, ip):
-			pasta = ip.replace('.', '-')
-			pasta = '{0}/.{1}'.format(PASTA_SERVIDOR, pasta)
-			if os.path.exists(pasta) == False:
-                os.mkdir('{0}/.{1}'.format(PASTA_SERVIDOR, pasta))
-			return pasta
+        '''
+            Método que gera uma pasta para cada cliente onde
+            os arquivos em transferência ficam armazenados
+            temporariamente.
+        '''
+        pasta = ip.replace('.', '-')
+        pasta = '{0}/.{1}'.format(PASTA_SERVIDOR, pasta)
+        if os.path.exists(pasta) == False:
+            os.mkdir('{0}'.format(pasta))
+        return pasta

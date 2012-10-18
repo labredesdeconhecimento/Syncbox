@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Cliente &mdash; Syncbox 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Syncbox 1 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to Syncbox’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Syncbox’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Syncbox 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cliente">
+<h1>Cliente<a class="headerlink" href="#cliente" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-cliente">
+<span id="cliente-py"></span><h2>cliente.py<a class="headerlink" href="#module-cliente" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="cliente.Cliente">
+<em class="property">class </em><tt class="descclassname">cliente.</tt><tt class="descname">Cliente</tt><a class="reference internal" href="_modules/cliente.html#Cliente"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cliente.Cliente" title="Permalink to this definition">¶</a></dt>
+<dd><p>A classe Cliente é reponsável por manipular todas as funções
+que os clientes desempenham.</p>
+<p>A classe Cliente detecta mudanças nos arquivos da pasta selecionada
+e faz todos procedimentos para atualizar o servidor e quando necessário
+atualizar seus arquivos.</p>
+<p>Atualizações nos arquivos do cliente ou nos arquivos do servidor só
+são lançadas após a autorização do servidor.</p>
+<dl class="method">
+<dt id="cliente.Cliente.read">
+<tt class="descname">read</tt><big>(</big><em>socket</em><big>)</big><a class="reference internal" href="_modules/cliente.html#Cliente.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cliente.Cliente.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que lê o fluxo de dados do socket.</p>
+<p>Argumento: Socket que recebe o fluxo.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cliente.Cliente.requisicao">
+<tt class="descname">requisicao</tt><big>(</big><em>mensagem</em><big>)</big><a class="reference internal" href="_modules/cliente.html#Cliente.requisicao"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cliente.Cliente.requisicao" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método para enviar uma requisição para o servidor
+e retornar a resposta do servidor.</p>
+<p>Argumento: Mensagem para ser enviada para o servidor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cliente.Cliente.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cliente.html#Cliente.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cliente.Cliente.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que inicia o cliente.</p>
+<p>Quando uma alteração nos arquivos é detectada, o cliente
+manda para o servidor uma mensagem pedindo autorização
+para fazer a atualização dos dados do servidor.</p>
+<p>O cliente manda uma mensagem para o servidor perguntado
+se houve alteração nos arquivos do servidor desde a
+última atualização do cliente. Caso seja constado que
+os arquivos do cliente não são os mais atuais, o cliente
+atualiza seus arquivos.</p>
+<p>Em um intervalo de tempo determinado todas essas ações
+são realizadas.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-diretorio">
+<span id="diretorio-py"></span><h2>diretorio.py<a class="headerlink" href="#module-diretorio" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="diretorio.Diretorio">
+<em class="property">class </em><tt class="descclassname">diretorio.</tt><tt class="descname">Diretorio</tt><big>(</big><em>servidor</em>, <em>pasta</em>, <em>pasta_servidor</em>, <em>pasta_temporaria</em>, <em>usuario</em>, <em>senha</em><big>)</big><a class="reference internal" href="_modules/diretorio.html#Diretorio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#diretorio.Diretorio" title="Permalink to this definition">¶</a></dt>
+<dd><p>A classe Diretório é responsável por detectar mudanças
+no diretório onde estão os arquivos do cliente e iniciar
+os comando necessários para atualização tanto do cliente
+quanto do servidor na hora que for preciso.</p>
+<p>Estrutura do comando RSYNC:</p>
+<p>São utilizados três tipos de comando RSYNC para atualização
+do arquivos:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Sincroniza servidor:</dt>
+<dd><dl class="first last docutils">
+<dt>Utilizado para sincronizar os arquivos do servidor:</dt>
+<dd><p class="first last">rsync -arzp &#8211;delete &#8211;exclude=.* -T [diretório temporário]
+&#8211;delay-updates &#8211;partial-dir=[diretório temporário]
+[diretório do cliente] [login servidor]&#64;[endereço servidor]:/
+[diretório do servidor]/</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Sincroniza cliente:</dt>
+<dd><dl class="first last docutils">
+<dt>Utilizado para sincronizar os arquivos do cliente:</dt>
+<dd><p class="first last">rsync -arzp &#8211;delete &#8211;exclude=.* [login servidor]&#64;
+[endereço servidor]:/[diretório do servidor]/
+[diretório do cliente]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Sincroniza cliente sem delete:</dt>
+<dd><p class="first">Utilizado para sincronizar os arquivos do cliente sem deletar
+arquivos que estão no cliente e não estão no servidor:</p>
+<blockquote>
+<div><p>rsync -arzp &#8211;exclude=.* [login servidor]&#64;
+[endereço servidor]:/[diretório do servidor]/
+[diretório do cliente]</p>
+</div></blockquote>
+<p>Argumentos Rsync:</p>
+<p>-a: Garante a recursão na hora da verificação dos arquivos.</p>
+<dl class="docutils">
+<dt>-r: Faz com que o Rsync procure arquivos recursivamente dentro</dt>
+<dd><p class="first last">dos diretórios do diretório indicado.</p>
+</dd>
+<dt>-z: Faz com que o Rsync faça uma compressão dos arquivos antes</dt>
+<dd><p class="first last">de fazer o envio deles.</p>
+</dd>
+</dl>
+<p>-p: Preserva a permissão dos arquivos.</p>
+<p>&#8211;exclude=.*: Não transfere nenhum arquivo oculto.</p>
+<dl class="last docutils">
+<dt>-T [dir]: Indica uma pasta temporária para guardar o arquivo</dt>
+<dd><p class="first last">que está sendo transferido.</p>
+</dd>
+<dt>&#8211;delay-updates: Indica que todos os arquivos que estão sendo</dt>
+<dd><p class="first last">transferidos naquela transação devem ficar na
+pasta indica com &#8211;partial-dir= até toda a
+transação ser concluída.</p>
+</dd>
+<dt>&#8211;partial-dir=[dir]: Indica onde os arquivos ficarão até o fim</dt>
+<dd><p class="first last">da transação.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="method">
+<dt id="diretorio.Diretorio.novos_arquivos">
+<tt class="descname">novos_arquivos</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/diretorio.html#Diretorio.novos_arquivos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#diretorio.Diretorio.novos_arquivos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que detecta se houve mudança nos arquivos do cliente.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diretorio.Diretorio.sincronizar_cliente_sem_delete">
+<tt class="descname">sincronizar_cliente_sem_delete</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/diretorio.html#Diretorio.sincronizar_cliente_sem_delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#diretorio.Diretorio.sincronizar_cliente_sem_delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que executa o comando rsync para atualizar
+o cliente sem delete.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diretorio.Diretorio.sincronizar_servidor">
+<tt class="descname">sincronizar_servidor</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/diretorio.html#Diretorio.sincronizar_servidor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#diretorio.Diretorio.sincronizar_servidor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que executa o comando rsync para atualizar o servidor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diretorio.Diretorio.sincrozinar_cliente">
+<tt class="descname">sincrozinar_cliente</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/diretorio.html#Diretorio.sincrozinar_cliente"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#diretorio.Diretorio.sincrozinar_cliente" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que executa o comando rsync para atualizar o cliente.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="servidor">
+<h1>Servidor<a class="headerlink" href="#servidor" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-servidor">
+<span id="servidor-py"></span><h2>servidor.py<a class="headerlink" href="#module-servidor" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="servidor.Servidor">
+<em class="property">class </em><tt class="descclassname">servidor.</tt><tt class="descname">Servidor</tt><a class="reference internal" href="_modules/servidor.html#Servidor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servidor.Servidor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classe Servidor.
+Todas as funcionalidades do servidor synbox estão nessa classe.</p>
+<p>O servidor é responsável por gerenciar todos os clientes, e reponder
+todas as requisições dos clientes.</p>
+<p>Em um determinado intervalo de tempo, o cliente &#8220;pergunta&#8221; ao servidor
+se existem novos arquivos, o servidor verifica a pasta onde os
+arquivos que vão ser sincronizados estão, caso haja mudança
+desde a ultima atualização do cliente, o servidor responde ao cliente
+que o mesmo deve fazer uma sincronização de dados.</p>
+<p>Todas as sincronizações são feitas apenas depois da autorização
+do servidor.</p>
+<dl class="method">
+<dt id="servidor.Servidor.escuta_cliente">
+<tt class="descname">escuta_cliente</tt><big>(</big><em>cliente</em><big>)</big><a class="reference internal" href="_modules/servidor.html#Servidor.escuta_cliente"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servidor.Servidor.escuta_cliente" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método responsável por atender as requisições de um cliente
+já conectado no servidor.</p>
+<p>Requisições:</p>
+<p>PRIMEIRA = Indica que o cliente está iniciando agora e faz seu
+primeiro contato com o servidor. O servidor inclui ou atualiza
+o cliente em um dicionário. O cliente sincroniza os dados do
+lado do cliente com os dados do lado do servidor.</p>
+<p>ATUALIZAR = O cliente informa ao servidor que irá sincronizar os
+dados do lado do servidor com os dados do lado do cliente.</p>
+<p>COMPLETA = O cliente informa ao servidor que acabou seu processo
+de sincronização. O servidor atribui ao cliente seu novo tempo
+de sincronização e atualiza o servidor com o novo último tempo
+de sincronização dos dados do servidor.</p>
+<p>NOVIDADE = O cliente procura saber com o servidor se aconteceu
+alguma sincronização desde a última sincronização que ele fez.
+O servidor compara sua última marca de tempo com a marca do cliente
+e responde se o cliente tem ou não que atualizar seu dados.</p>
+<p>PASTA= O cliente pede ao servidor informações sobre o caminho da
+pasta onde o servidor está guardado os dados, para que esse caminho
+possa ser configurado no mecanismo de sincrinização.</p>
+<p>OBS: Em cada resposta é usado um símbolo &#8220;#&#8221; para definir o final
+da string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="servidor.Servidor.gerar_pasta_temporaria">
+<tt class="descname">gerar_pasta_temporaria</tt><big>(</big><em>ip</em><big>)</big><a class="reference internal" href="_modules/servidor.html#Servidor.gerar_pasta_temporaria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servidor.Servidor.gerar_pasta_temporaria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método que gera uma pasta para cada cliente onde
+os arquivos em transferência ficam armazenados
+temporariamente.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="servidor.Servidor.read">
+<tt class="descname">read</tt><big>(</big><em>cliente</em><big>)</big><a class="reference internal" href="_modules/servidor.html#Servidor.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servidor.Servidor.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método responsável por ler as mensagens dos clientes para
+o servidor.</p>
+<p>Recebe como parâmetro o socket do cliente que está enviando
+a mensagem.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="servidor.Servidor.send">
+<tt class="descname">send</tt><big>(</big><em>cliente</em>, <em>mensagem</em><big>)</big><a class="reference internal" href="_modules/servidor.html#Servidor.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servidor.Servidor.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método responsável por enviar mensagens do servidor
+para os clientes.</p>
+<p>Recebe como parâmetro um socket do cliente que vai
+receber a mensagem e a mensagem que vai ser enviada.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="servidor.Servidor.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/servidor.html#Servidor.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servidor.Servidor.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Método responsável por escutar o socket e esperar conexões
+nesse socket.</p>
+<p>Quando um cliente se conecta no servidor, uma thread é lançada
+para cuidar das requisições do cliente conectado, e esse
+método volta a escutar o socket aguardando novas conexões.</p>
+<p>O uso de threads nessa parte do software é fundamental
+para o servidor ser capaz de atender vários clientes
+paralelamente.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cliente</a><ul>
+<li><a class="reference internal" href="#module-cliente">cliente.py</a></li>
+<li><a class="reference internal" href="#module-diretorio">diretorio.py</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#servidor">Servidor</a><ul>
+<li><a class="reference internal" href="#module-servidor">servidor.py</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Syncbox&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/documentacao.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Syncbox’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Syncbox 1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thiago Dias.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
