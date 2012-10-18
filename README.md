@@ -15,9 +15,12 @@ todas as ações) e N clientes conectados a esse servidor.
 
 
 Autor: Thiago Dias da Silva
+
 Email: thiagodd.silva@gmail.com
+
 Data: 16/10/2012
 
 Dependência:
     Rsync: http://www.samba.org/ftp/rsync/rsync.html
+
     sshpass: http://sourceforge.net/projects/sshpass/
